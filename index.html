@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realtime Chat App</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      /* CSS kustom */
+      #messages {
+        list-style-type: none;
+        padding: 0;
+        max-height: 300px; /* Tambahkan tinggi maksimum untuk daftar pesan */
+        overflow-y: auto; /* Tambahkan overflow-y agar daftar pesan dapat di-scroll */
+      }
+      #messages li {
+        margin-bottom: 10px;
+        position: relative; /* Menentukan posisi tombol dalam konteks pesan */
+      }
+      .chat-form {
+        display: flex;
+      }
+      .chat-form input[type="text"] {
+        flex: 1;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      .chat-form button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .copy-button {
+        position: absolute; /* Menentukan posisi tombol dalam konteks pesan */
+        top: 0;
+        right: 0;
+        padding: 0.25rem 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="#">Chat App</a>
+        <button class="btn btn-danger" onclick="window.location.href = '/'">
+          Logout
+        </button>
+      </div>
+    </nav>
+
+    <div class="container mt-3">
+      <ul id="messages" class="mb-3"></ul>
+      <form id="form" class="chat-form">
+        <input
+          id="input"
+          type="text"
+          class="form-control"
+          autocomplete="off"
+          placeholder="Type your message..."
+        />
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      $(function () {
+        const socket = io();
+
+        $("#form").submit(function (e) {
+          e.preventDefault(); // prevents page reloading
+          socket.emit("chat message", $("#input").val());
+          $("#input").val("");
+          return false;
+        });
+
+        socket.on("chat message", function (msg) {
+          var $message = $("<li>").text(msg.username + ": " + msg.message);
+          var $copyButton = $("<button>")
+            .addClass("btn btn-sm btn-secondary copy-button")
+            .text("Copy Pesan")
+            .on("click", function () {
+              copyToClipboard(msg.username + ": " + msg.message);
+            });
+          $message.append($copyButton);
+          $("#messages").append($message);
+        });
+
+        const username = prompt("Please enter your username:");
+        socket.emit("add user", username);
+
+        // Fungsi untuk menyalin teks ke clipboard
+        function copyToClipboard(text) {
+          var $tempInput = $("<input>");
+          $("body").append($tempInput);
+          $tempInput.val(text).select();
+          document.execCommand("copy");
+          $tempInput.remove();
+          alert("Pesan berhasil disalin ke clipboard!");
+        }
+      });
+    </script>
+  </body>
+</html>
